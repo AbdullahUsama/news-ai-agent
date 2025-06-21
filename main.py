@@ -265,7 +265,8 @@ app = FastAPI(
 # Add CORS middleware
 origins = [
     "http://localhost:3000",  # Allow your local Next.js dev server
-    "https://your-vercel-frontend-domain.vercel.app", # Replace with your actual Vercel domain!
+    "https://dawn-ai-frontend.vercel.app/", # Replace with your actual Vercel domain!
+    "https://dawn-ai-frontend.vercel.app", # Replace with your actual Vercel domain!
     # Add other domains if needed, e.g., "https://example.com"
 ]
 
