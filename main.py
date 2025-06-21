@@ -136,6 +136,16 @@ from langchain.agents import create_tool_calling_agent, AgentExecutor
 import requests
 from bs4 import BeautifulSoup
 
+
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware # Import CORS middleware
+from pydantic import BaseModel, Field
+from typing import List, Dict, Optional
+import json
+from datetime import datetime, timedelta
+
+
+
 # --- Your existing scrape_dawn_articles tool definition ---
 @tool
 def scrape_dawn_articles(start_date=None, end_date=None):
@@ -250,6 +260,21 @@ app = FastAPI(
     title="Dawn News Scraper Agent",
     description="An AI agent that scrapes and analyzes articles from Dawn newspaper editorial section.",
     version="1.0.0",
+)
+
+# Add CORS middleware
+origins = [
+    "http://localhost:3000",  # Allow your local Next.js dev server
+    "https://your-vercel-frontend-domain.vercel.app", # Replace with your actual Vercel domain!
+    # Add other domains if needed, e.g., "https://example.com"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"], # Allow all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"], # Allow all headers (like Content-Type)
 )
 
 # Pydantic model for the API request body
