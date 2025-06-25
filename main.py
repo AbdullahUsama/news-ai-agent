@@ -222,7 +222,6 @@ def scrape_dawn_articles(start_date=None, end_date=None):
 # os.environ["GOOGLE_API_KEY"] = "YOUR_GOOGLE_API_KEY"
 
 llm = ChatGoogleGenerativeAI(model="models/gemini-2.0-flash")
-
 tools = [scrape_dawn_articles]
 
 prompt = ChatPromptTemplate.from_messages([
@@ -234,13 +233,17 @@ When using the 'scrape_dawn_articles' tool, always ensure that 'start_date' and 
 If the user provides relative dates (e.g., "yesterday", "today", "last week", "June 5th"), you MUST first convert these into their exact "YYYY-MM-DD" calendar dates before calling the tool.
 Today's date is 2025-06-21. Use this knowledge for relative date calculations.
 
-
 **Conditional Behavior for Article Processing:**
 - **Default Action (when only dates are provided):** If the user's request consists *only* of a date or a date range (e.g., "articles for June 10", "news from 2025-06-05 to 2025-06-07") **AND contains NO other specific output instructions** (e.g., "summarize", "provide urls", "list headlines", "find key points", etc.), you MUST scrape the articles. After successfully scraping, for EACH scraped article, read its content and provide two distinct lists based on it, strictly following the format below:
     1. Words: List all good vocabulary words from the article, along with a concise meaning for each. Format each entry as "word: meaning", and place each complete entry on a new line. Do not use any bullet points, dashes, or other special formatting.
     2. Phrases and Idioms: List different phrases and idioms found in the article, along with a concise meaning for each. Format each entry as "phrase: meaning", and place each complete entry on a new line. Do not use any bullet points, dashes, or other special formatting.
 
 - **Specific Request Priority:** If the user provides *any* specific instruction or requests a particular type of information about the articles (e.g., "I just want the URLs", "summarize the articles", "find key points", "list headlines", "show topics"), you MUST prioritize and fulfill *only* that specific request. In these cases, the vocabulary and idiom lists should NOT be provided under any circumstances.
+
+- **Topic-Specific Requests:** If the user asks for article **URLs or summaries** related to a **specific topic** (e.g., "economy", "climate", "politics") within a **specific date or date range**, you MUST scrape all articles for that time period, filter them based on relevance to the requested topic, and return only those that match. 
+    - If they request **URLs**, provide only the links of the topic-relevant articles.
+    - If they request **summaries**, summarize only the relevant articles.
+    - Do NOT include unrelated articles or extra commentary.
 
 **Topic Restriction:**
 - You can only answer questions or fulfill requests that are directly related to news articles or the news domain, specifically from the Dawn newspaper.
@@ -250,6 +253,7 @@ Today's date is 2025-06-21. Use this knowledge for relative date calculations.
     ("ai", "Use the tools to answer the question."),
     ("placeholder", "{agent_scratchpad}")
 ])
+
 
 agent = create_tool_calling_agent(llm, tools, prompt)
 agent_exec = AgentExecutor(agent=agent, tools=tools, verbose=True)
@@ -264,10 +268,9 @@ app = FastAPI(
 
 # Add CORS middleware
 origins = [
-    "http://localhost:3000",  # Allow your local Next.js dev server
-    "https://dawn-ai-frontend.vercel.app/", # Replace with your actual Vercel domain!
-    "https://dawn-ai-frontend.vercel.app", # Replace with your actual Vercel domain!
-    # Add other domains if needed, e.g., "https://example.com"
+    "http://localhost:3000",  
+    "https://dawn-ai-frontend.vercel.app/", 
+    "https://dawn-ai-frontend.vercel.app", 
 ]
 
 app.add_middleware(
@@ -278,11 +281,9 @@ app.add_middleware(
     allow_headers=["*"], # Allow all headers (like Content-Type)
 )
 
-# Pydantic model for the API request body
 class AgentQuery(BaseModel):
     query: str = Field(..., description="The natural language query for the agent.")
 
-# Pydantic model for the API response
 class AgentResponse(BaseModel):
     response: str
     articles: Optional[List[Dict]] = Field(None, description="List of scraped articles if applicable.")
