@@ -178,8 +178,11 @@ async def invoke_agent(query_body: AgentQuery):
     """
     try:
         # The agent.invoke method returns a dictionary
-        agent_result = agent_exec.invoke({"input": query_body.query})
-
+        # agent_result = agent_exec.invoke({"input": query_body.query})
+        agent_result = agent_exec.invoke({
+            "input": query_body.query,
+            "today_str": today_str
+        })
         # The output of the agent is typically in agent_result['output']
         # The tool output might also be part of the scratchpad, or directly available
         # if the agent's final answer is just the tool output.
